@@ -51,9 +51,139 @@ def generate_top_10(df, column, title):
     st.subheader(f"Top 10 {title}")
     st.bar_chart(top_10)
 
-    # Exibir a tabela ao lado do gráfico com a segunda coluna como "Tipo"
+    # Exibir a tabela com o índice oculto e a primeira coluna como 'Skills'
+    top_10_df = top_10.reset_index()
+    top_10_df.columns = ['Skills', 'Contagem']  # Renomeando as colunas
     st.subheader(f"📊 Tabela do Top 10 - {title}")
-    st.table(top_10.reset_index().rename(columns={'index': 'Skill', top_10.name: 'Tipo'}))
+    st.table(top_10_df)  # Mostrando a tabela sem o índice
+
+# Função para gerar insights
+def generate_insights(df):
+    st.header("⭐ Principais Insights")
+
+    # Função auxiliar para extrair o top 3 de uma coluna, sem valores nulos
+    def get_top_3(df, column):
+        top_3 = df[column].dropna().str.split(";").explode().str.strip().value_counts()
+        top_3 = top_3[top_3.index != '']
+        top_3_df = top_3.nlargest(3).reset_index(drop=False)
+        top_3_df.columns = ['Skills', 'Contagem']
+        return top_3_df
+
+    def get_bottom_3(df, column):
+        bottom_3 = df[column].dropna().str.split(";").explode().str.strip().value_counts()
+        # Remover valores nulos ou vazios
+        bottom_3 = bottom_3[bottom_3.index != '']
+        # Transformar em DataFrame, resetar o índice e renomear as colunas
+        bottom_3_df = bottom_3.nsmallest(3).reset_index(drop=False)  # Converte para DataFrame e mantém a coluna de valores
+    
+        # Renomear as colunas para 'Skills' e 'Contagem'
+        bottom_3_df.columns = ['Skills', 'Contagem']
+        return bottom_3_df
+
+    # Função para filtrar por cargo
+    def filter_by_job(df, job_title, column):
+        df_filtered = df[df['qual_seu_enquadramentocargo'] == job_title]
+        return get_top_3(df_filtered, column)
+
+    # Função para filtrar por vertical
+    def filter_by_vertical(df, vertical_name, column):
+        df_filtered = df[df['qual_a_sua_vertical'] == vertical_name]
+        return get_top_3(df_filtered, column)
+
+    sections = [
+        ("Soft Skills", "agora_que_você_já_conhece_algumas_das_soft_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam"),
+        ("Hard Skills Pesquisa e Inovação", "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam"),
+        ("Hard Skills Sistemas Autônomos", "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam_1"),
+        ("Hard Skills Data Science", "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam2"),
+        ("Hard Skills Geoespacial", "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam3")
+    ]
+
+    for section_name, column in sections:
+        st.subheader(f"🔍 {section_name}")
+        # Exibir os Top 3 skills mais escolhidas e menos escolhidas lado a lado
+        col1, col2 = st.columns(2)  # Divide em duas colunas
+
+        with col1:
+            st.write("**Top 3 skills mais escolhidas**:")
+            st.write(get_top_3(df, column))
+
+        with col2:
+            st.write("**Top 3 skills menos escolhidas**:")
+            st.write(get_bottom_3(df, column))
+
+
+        # Exibir os Top 3 por cargos (Pesquisador Industrial I, II, Estagiário) lado a lado
+        col1, col2, col3 = st.columns(3)  # Divide em três colunas
+
+        with col1:
+            st.write("**Top 3 para Pesquisador I:**")
+            st.write(filter_by_job(df, 'Pesquisador Industrial I', column))
+
+        with col2:
+            st.write("**Top 3 para Pesquisador II:**")
+            st.write(filter_by_job(df, 'Pesquisador Industrial II', column))
+
+        with col3:
+            st.write("**Top 3 para Estagiário:**")
+            st.write(filter_by_job(df, 'Estagiário', column))
+
+
+        # Exibir os Top 3 para as verticais (Ciência de Dados, Geoespacial) na primeira linha
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Top 3 para a vertical Ciência de Dados:**")
+            st.write(filter_by_vertical(df, 'Ciência de Dados', column))
+
+        with col2:
+            st.write("**Top 3 para a vertical Geoespacial:**")
+            st.write(filter_by_vertical(df, 'Geoespacial', column))
+
+        # Exibir os Top 3 para as verticais (Engenharia de Sistemas, Sistemas Autônomos) na segunda linha
+        col3, col4 = st.columns(2)
+
+        with col3:
+            st.write("**Top 3 para a vertical Engenharia de Sistemas:**")
+            st.write(filter_by_vertical(df, 'Engenharia de Sistemas', column))
+
+        with col4:
+            st.write("**Top 3 para a vertical Sistemas Autônomos:**")
+            st.write(filter_by_vertical(df, 'Sistemas Autônomos', column))
+
+        # Adicionando os comentários estáticos após a seção de insights
+        if section_name == "Soft Skills":
+            st.markdown("""
+            - Percebe-se que as Soft Skills mais críticas para os respondentes são voltadas para cenários de P&D e análise científica;
+            - Softskills como: Capacidade de assumir riscos e Engajamento, não tiveram votos;
+            - Estagiários consideram a principal soft skill sendo a de colaboração, pesquisadores I a de comunicação científica, e os pesquisadores II consideram ensino e mentoria;
+            - Dentro das verticais, percebe-se um entendimento comum de priorizar soft skills voltadas para cenários de P&D e análise científica.
+            """)
+
+        elif section_name == "Hard Skills Pesquisa e Inovação":
+            st.markdown("""
+            - As principais hard skills de pesquisa e inovação vão na linha de resolução de problemas, tomadas de decisão e documentação clara;
+            - As hard skills menos escolhidas são voltadas para cenários de codificação, como code review, QA e controle de versão;
+            - Dentro das verticais, a de ciência de dados se diferencia, apontando como principal hard skill a modelagem de dados.
+            """)
+
+        elif section_name == "Hard Skills Sistemas Autônomos":
+            st.markdown("""
+            - Agentes cognitivos e deep learning são as principais skills;
+            - Skills voltadas para embarcados e hardwares não receberam nenhum voto, apesar de terem sido mencionadas como essenciais.
+            """)
+
+        elif section_name == "Hard Skills Data Science":
+            st.markdown("""
+            - Implementação de machine learning, Python e análise de dados são as principais skills;
+            - Skills como engenharia de dados e data governance não receberam nenhum voto.
+            """)
+
+        elif section_name == "Hard Skills Geoespacial":
+            st.markdown("""
+            - Análise de imagens multiespectrais, análise espacial e monitoramento de áreas são as skills principais;
+            - Construção de UAS e eVTOL customizados não recebeu nenhum voto.
+            """)
+
 
 # Função principal do aplicativo Streamlit
 def main():
@@ -66,6 +196,9 @@ def main():
     if uploaded_file is not None:
         # Carregar e limpar os dados
         df = load_and_clean_data(uploaded_file)
+
+        # Geração de insights
+        generate_insights(df)
 
         # Barra lateral (sidebar) para os filtros
         st.sidebar.header("Filtros 📂")
@@ -99,31 +232,32 @@ def main():
         # Seção 2: Hard Skills
         st.header("🔍 Análise de Hard Skills Pesquisa e Inovação")
         st.markdown("Aqui estão as habilidades técnicas mais escolhidas.")
-        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam", "Hard Skills")
+        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam", "Hard Skills Pesquisa e Inovação")
 
         # Separação visual para Hard Skills
         st.markdown("---")  # Linha horizontal para separar seções
 
-        # Seção 3: Hard Skills Sistemas
+        # Seção 3: Hard Skills Sistemas Autônomos
         st.header("🤖 Análise de Hard Skills Sistemas Autônomos")
         st.markdown("Aqui estão as habilidades técnicas mais escolhidas.")
-        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam_1", "Hard Skills")
+        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam_1", "Hard Skills Sistemas Autônomos")
 
         # Separação visual para Hard Skills
         st.markdown("---")  # Linha horizontal para separar seções
 
-        # Seção 2: Hard Skills
+        # Seção 4: Hard Skills Data Science
         st.header("💻 Análise de Hard Skills Data Science")
         st.markdown("Aqui estão as habilidades técnicas mais escolhidas.")
-        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam2", "Hard Skills")
+        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam2", "Hard Skills Data Science")
 
         # Separação visual para Hard Skills
         st.markdown("---")  # Linha horizontal para separar seções
 
-        # Seção 2: Hard Skills
+        # Seção 5: Hard Skills Geoespacial
         st.header("🗺️ Análise de Hard Skills Geoespacial")
         st.markdown("Aqui estão as habilidades técnicas mais escolhidas.")
-        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam3", "Hard Skills")
+        generate_top_10(df, "agora_que_você_já_conhece_algumas_das_hard_skills_se_você_tivesse_que_escolher_apenas_5_das_descritas_acima_quais_seriam3", "Hard Skills Geoespacial")
 
 if __name__ == "__main__":
     main()
+
