@@ -61,11 +61,11 @@ def generate_top_10(df, column, title):
 def generate_insights(df):
     st.header("⭐ Principais Insights")
 
-    # Função auxiliar para extrair o top 3 de uma coluna, sem valores nulos
+    # Função auxiliar para extrair o Top 5 de uma coluna, sem valores nulos
     def get_top_3(df, column):
         top_3 = df[column].dropna().str.split(";").explode().str.strip().value_counts()
         top_3 = top_3[top_3.index != '']
-        top_3_df = top_3.nlargest(3).reset_index(drop=False)
+        top_3_df = top_3.nlargest(5).reset_index(drop=False)
         top_3_df.columns = ['Skills', 'Contagem']
         return top_3_df
 
@@ -74,7 +74,7 @@ def generate_insights(df):
         # Remover valores nulos ou vazios
         bottom_3 = bottom_3[bottom_3.index != '']
         # Transformar em DataFrame, resetar o índice e renomear as colunas
-        bottom_3_df = bottom_3.nsmallest(3).reset_index(drop=False)  # Converte para DataFrame e mantém a coluna de valores
+        bottom_3_df = bottom_3.nsmallest(5).reset_index(drop=False)  # Converte para DataFrame e mantém a coluna de valores
     
         # Renomear as colunas para 'Skills' e 'Contagem'
         bottom_3_df.columns = ['Skills', 'Contagem']
@@ -100,54 +100,54 @@ def generate_insights(df):
 
     for section_name, column in sections:
         st.subheader(f"🔍 {section_name}")
-        # Exibir os Top 3 skills mais escolhidas e menos escolhidas lado a lado
+        # Exibir os Top 5 skills mais escolhidas e menos escolhidas lado a lado
         col1, col2 = st.columns(2)  # Divide em duas colunas
 
         with col1:
-            st.write("**Top 3 skills mais escolhidas**:")
+            st.write("**Top 5 skills mais escolhidas**:")
             st.write(get_top_3(df, column))
 
         with col2:
-            st.write("**Top 3 skills menos escolhidas**:")
+            st.write("**Top 5 skills menos escolhidas**:")
             st.write(get_bottom_3(df, column))
 
 
-        # Exibir os Top 3 por cargos (Pesquisador Industrial I, II, Estagiário) lado a lado
+        # Exibir os Top 5 por cargos (Pesquisador Industrial I, II, Estagiário) lado a lado
         col1, col2, col3 = st.columns(3)  # Divide em três colunas
 
         with col1:
-            st.write("**Top 3 para Pesquisador I:**")
+            st.write("**Top 5 para Pesquisador I:**")
             st.write(filter_by_job(df, 'Pesquisador Industrial I', column))
 
         with col2:
-            st.write("**Top 3 para Pesquisador II:**")
+            st.write("**Top 5 para Pesquisador II:**")
             st.write(filter_by_job(df, 'Pesquisador Industrial II', column))
 
         with col3:
-            st.write("**Top 3 para Estagiário:**")
+            st.write("**Top 5 para Estagiário:**")
             st.write(filter_by_job(df, 'Estagiário', column))
 
 
-        # Exibir os Top 3 para as verticais (Ciência de Dados, Geoespacial) na primeira linha
+        # Exibir os Top 5 para as verticais (Ciência de Dados, Geoespacial) na primeira linha
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("**Top 3 para a vertical Ciência de Dados:**")
+            st.write("**Top 5 para a vertical Ciência de Dados:**")
             st.write(filter_by_vertical(df, 'Ciência de Dados', column))
 
         with col2:
-            st.write("**Top 3 para a vertical Geoespacial:**")
+            st.write("**Top 5 para a vertical Geoespacial:**")
             st.write(filter_by_vertical(df, 'Geoespacial', column))
 
-        # Exibir os Top 3 para as verticais (Engenharia de Sistemas, Sistemas Autônomos) na segunda linha
+        # Exibir os Top 5 para as verticais (Engenharia de Sistemas, Sistemas Autônomos) na segunda linha
         col3, col4 = st.columns(2)
 
         with col3:
-            st.write("**Top 3 para a vertical Engenharia de Sistemas:**")
+            st.write("**Top 5 para a vertical Engenharia de Sistemas:**")
             st.write(filter_by_vertical(df, 'Engenharia de Sistemas', column))
 
         with col4:
-            st.write("**Top 3 para a vertical Sistemas Autônomos:**")
+            st.write("**Top 5 para a vertical Sistemas Autônomos:**")
             st.write(filter_by_vertical(df, 'Sistemas Autônomos', column))
 
         # Adicionando os comentários estáticos após a seção de insights
